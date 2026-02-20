@@ -1,0 +1,3 @@
+---
+quiz_repo: https://gitlab.com/ftutorials-labs/quiz-ansible.git
+quiz_dest: /quiz-ansible

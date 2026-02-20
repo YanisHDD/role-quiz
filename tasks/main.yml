@@ -1,0 +1,65 @@
+---
+- name: Mettre à jour les paquets (Debian)
+  ansible.builtin.apt:
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Mettre à jour les paquets (RedHat)
+  ansible.builtin.dnf:
+    update_cache: true
+  when: ansible_os_family == "RedHat"
+
+- name: Installer curl et git (Debian)
+  ansible.builtin.apt:
+    name:
+      - curl
+      - git
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Ajouter le dépôt NodeSource (Debian)
+  ansible.builtin.shell: curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  args:
+    creates: /etc/apt/sources.list.d/nodesource.list
+  when: ansible_os_family == "Debian"
+
+- name: Installer nodejs depuis NodeSource (Debian)
+  ansible.builtin.apt:
+    name: nodejs
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Installer git et nodejs (RedHat)
+  ansible.builtin.dnf:
+    name:
+      - git
+      - nodejs
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Cloner le dépôt git
+  ansible.builtin.git:
+    repo: "{{ quiz_repo }}"
+    dest: "{{ quiz_dest }}"
+    version: main
+
+- name: Installer les dépendances npm
+  ansible.builtin.command: npm install
+  args:
+    chdir: "{{ quiz_dest }}"
+
+- name: Construire le projet
+  ansible.builtin.command: npm run build
+  args:
+    chdir: "{{ quiz_dest }}"
+
+- name: Installer serve globalement
+  ansible.builtin.command: npm install -g serve
+
+- name: Démarrer le serveur
+  ansible.builtin.command: serve -s dist
+  args:
+    chdir: "{{ quiz_dest }}"
+  async: 3600
+  poll: 0
